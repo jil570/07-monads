@@ -27,12 +27,14 @@ parseWeatherTest3 = parseWeather m ~?= Nothing
     m = Map.fromList [("day", "two"), ("maxTemp", "78"), ("minTemp", "62")]
 
 parseWeather :: Map String String -> Maybe Weather
-parseWeather data = do
-  daymb <- Map.lookup "day" data
+parseWeather x = do
+  daymb <- Map.lookup "day" x
+  maxmb <- Map.lookup "maxTemp" x
+  minmb <- Map.lookup "minTemp" x
   dayNumber <- Text.readMaybe daymb
-  maxTemp <- Text.readMaybe $ Data.Maybe.fromMaybe "" (Map.lookup "maxTemp")
-  minTemp <- Text.readMaybe $ Data.Maybe.fromMaybe "" (Map.lookup "minTemp")
-  return (Weather dayNumber, maxTemp, minTemp)
+  maxTemp <- Text.readMaybe maxmb
+  minTemp <- Text.readMaybe minmb
+  return (Weather dayNumber maxTemp minTemp)
 
 -- 2
 
