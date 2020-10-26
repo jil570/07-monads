@@ -2,6 +2,7 @@ module MaybePractice where
 
 import Data.Map (Map)
 import qualified Data.Map as Map
+import Data.Maybe
 import Test.HUnit
 import qualified Text.Read as Text
 
@@ -26,7 +27,12 @@ parseWeatherTest3 = parseWeather m ~?= Nothing
     m = Map.fromList [("day", "two"), ("maxTemp", "78"), ("minTemp", "62")]
 
 parseWeather :: Map String String -> Maybe Weather
-parseWeather = undefined
+parseWeather data = do
+  daymb <- Map.lookup "day" data
+  dayNumber <- Text.readMaybe daymb
+  maxTemp <- Text.readMaybe $ Data.Maybe.fromMaybe "" (Map.lookup "maxTemp")
+  minTemp <- Text.readMaybe $ Data.Maybe.fromMaybe "" (Map.lookup "minTemp")
+  return (Weather dayNumber, maxTemp, minTemp)
 
 -- 2
 
