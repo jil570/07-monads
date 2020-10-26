@@ -13,7 +13,9 @@ data Tree a = Leaf a | Branch (Tree a) (Tree a)
 
 -- | zip two trees together
 zipTree :: Tree a -> Tree b -> Tree (a, b)
-zipTree = undefined
+zipTree (Leaf a) (Leaf b) = Leaf (a, b)
+zipTree (Branch a b) (Branch c d) = Branch (zipTree a c) (zipTree b d)
+zipTree _ _ = error "Need to have same shape"
 
 testZip0 :: Bool
 testZip0 =
@@ -23,7 +25,14 @@ testZip0 =
     == Branch (Leaf ("a", 0)) (Branch (Leaf ("b", 1)) (Leaf ("c", 2)))
 
 zipTree1 :: Tree a -> Tree b -> Maybe (Tree (a, b))
-zipTree1 = undefined
+zipTree1 (Leaf a) (Leaf b) = Just $ Leaf (a, b)
+zipTree1 (Branch l r) (Branch l' r') =
+  case zipTree1 l l' of
+    Nothing -> Nothing
+    Just x -> case zipTree1 r r' of
+      Nothing -> Nothing
+      Just y -> Just (Branch x y)
+zipTree1 _ _ = Nothing
 
 testZip :: (Tree String -> Tree Int -> Maybe (Tree (String, Int))) -> Bool
 testZip zt =
@@ -77,6 +86,7 @@ zipTree2 _ _ = Nothing
 retrn :: a -> Maybe a
 retrn = Just
 
+bind :: Maybe t -> (t -> Maybe a) -> Maybe a
 bind x f = case x of
   Nothing -> Nothing
   Just y -> f y
@@ -105,7 +115,9 @@ zipTree4 _ _ = Nothing
 zipTree5 :: Tree a -> Tree b -> Maybe (Tree (a, b))
 zipTree5 (Leaf a) (Leaf b) = return (Leaf (a, b))
 zipTree5 (Branch l r) (Branch l' r') = do
-  undefined
+  x <- zipTree5 l l'
+  y <- zipTree5 r r'
+  return (Branch x y)
 zipTree5 _ _ = Nothing
 
 main :: IO ()
@@ -130,16 +142,16 @@ zipTree7 (Branch l r) (Branch l' r') =
 zipTree7 _ _ = Nothing
 
 fmapMonad :: (Monad m) => (a -> b) -> m a -> m b
-fmapMonad = undefined
+fmapMonad f m = m >>= return . f
 
 pureMonad :: (Monad m) => a -> m a
-pureMonad = undefined
+pureMonad = return
 
 zapMonad :: (Monad m) => m (a -> b) -> m a -> m b
-zapMonad = undefined
+zapMonad m1 m2 = m1 >>= \f -> m2 >>= \x -> return (f x)
 
 pairs0 :: [a] -> [b] -> [(a, b)]
-pairs0 xs ys = undefined
+pairs0 xs ys = concat (map (\x -> concat (map (\y -> [(x, y)]) ys)) xs)
 
 testPairs :: ([Int] -> [Int] -> [(Int, Int)]) -> Bool
 testPairs ps =
@@ -203,10 +215,13 @@ pairs1 xs ys =
     )
 
 pairs2 :: [a] -> [b] -> [(a, b)]
-pairs2 xs ys = undefined
+pairs2 xs ys = xs >>= \x -> ys >>= \y -> return (x, y)
 
 pairs3 :: [a] -> [b] -> [(a, b)]
-pairs3 xs ys = undefined
+pairs3 xs ys = do
+  x <- xs
+  y <- ys
+  return (x, y)
 
 testPairs2 :: Bool
 testPairs2 = testPairs pairs2
@@ -253,18 +268,25 @@ colorsNeeded = List.find (not . null . stateColors) cs
     cs = zipWith take [1 ..] (replicate 6 [Red ..])
 
 map' :: (a -> b) -> [a] -> [b]
-map' f xs = undefined
+map' f xs = [f x | x <- xs]
 
 firstLess :: Ord a => [a] -> [a] -> [(a, a)]
-firstLess = undefined
+firstLess xs ys = [(x, y) | x <- xs, y <- ys, x < y]
 
 map1 :: (a -> b) -> [a] -> [b]
-map1 = undefined
+map1 f xs = do
+  x <- xs
+  return (f x)
 
 firstLess1 :: Ord a => [a] -> [a] -> [(a, a)]
-firstLess1 xs ys = undefined
+firstLess1 xs ys = do
+  x <- xs
+  y <- ys
+  guard (x < y)
+  return (x, y)
 
 filter' :: (a -> Bool) -> [a] -> [a]
-filter' f xs = undefined
+filter' f xs = [x | x <- xs, f x]
 
-pairs6 xs ys = undefined
+pairs6 :: Applicative f => f a1 -> f a2 -> f (a1, a2)
+pairs6 xs ys = pure (,) <*> xs <*> ys
